@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vestup Registration</title>
+<!-- Loader & Form Styles -->
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #0d6efd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+.loader-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #0d6efd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.loader-wave {
+    display: flex;
+    gap: 5px;
+}
+.loader-wave div {
+    width: 8px;
+    height: 35px;
+    background: white;
+    animation: wave 1.2s infinite ease-in-out;
+}
+.loader-wave div:nth-child(1) { animation-delay: 0s; }
+.loader-wave div:nth-child(2) { animation-delay: 0.1s; }
+.loader-wave div:nth-child(3) { animation-delay: 0.2s; }
+.loader-wave div:nth-child(4) { animation-delay: 0.3s; }
+.loader-wave div:nth-child(5) { animation-delay: 0.4s; }
+@keyframes wave {
+    0%, 40%, 100% { transform: scaleY(0.4); }
+    20% { transform: scaleY(1); }
+}
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+}
+.container img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 5px;
+}
+button {
+    background: #0d6efd;
+    color: white;
+    font-size: 16px;
+}
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 5px;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.4s;
+    z-index: 10000;
+}
+.toast.show { opacity: 1; }
+.toast.success { background: green; }
+.toast.error { background: red; }
+p a {
+    color: #0d6efd;
+    text-decoration: none;
+    font-weight: bold;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/appwrite@13"></script>
+</head>
+<body>
+
+<!-- Loader -->
+<div class="loader-overlay" id="loader">
+    <div class="loader-wave">
+        <div></div><div></div><div></div><div></div><div></div>
+    </div>
+</div>
+
+<!-- Registration Form -->
+<div class="container">
+    <img src="asset/vestupdb.jpg" alt="VestupDB Logo">
+    <form id="registerForm">
+        <input type="text" id="name" placeholder="Full Name" required>
+        <input type="text" id="phone" placeholder="Phone Number" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+        <button type="submit">Register</button>
+    </form>
+    <p>Do you have an account? <a href="login.html" id="loginLink">Login</a></p>
+</div>
+
+<script>
+// Loader control
+function showLoader() {
+    document.getElementById("loader").style.display = "flex";
+}
+function hideLoader() {
+    document.getElementById("loader").style.display = "none";
+}
+window.addEventListener("load", hideLoader);
+
+// Toast function
+function showToast(message, type) {
+    let toast = document.createElement("div");
+    toast.classList.add("toast", type);
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+    }, 3000);
+}
+
+// Appwrite setup
+const client = new Appwrite.Client()
+    .setEndpoint("https://fra.cloud.appwrite.io/v1")
+    .setProject("689cab96003483d3f4b8");
+
+const account = new Appwrite.Account(client);
+
+// Form handling
+document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const confirmPassword = document.getElementById("confirmPassword").value.trim();
+
+    if (password !== confirmPassword) {
+        showToast("Passwords do not match!", "error");
+        return;
+    }
+
+    showLoader();
+    try {
+        await account.create(Appwrite.ID.unique(), email, password, name);
+        showToast("Registration successful!", "success");
+        setTimeout(() => window.location.href = "login.html", 1500);
+    } catch (error) {
+        showToast(error.message, "error");
+    } finally {
+        hideLoader();
+    }
+});
+
+// Login redirect with loader
+document.getElementById("loginLink").addEventListener("click", function(e) {
+    e.preventDefault();
+    showLoader();
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 1000);
+});
+</script>
+
+</body>
+</html>
